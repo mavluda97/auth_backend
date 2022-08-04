@@ -1,4 +1,5 @@
 const express = require("express");
+require("dotenv").config();
 const { pool } = require("./config");
 const bcrypt = require("bcrypt");
 const app = express();
@@ -70,11 +71,12 @@ app.post("/api/users", (req, res) => {
         } else {
           let hashedPassword = await bcrypt.hash(password, 10);
           console.log(hashedPassword);
+          const current_time = new Date();
           pool.query(
-            `INSERT INTO users (name, email, password) 
-             VALUES ($1, $2, $3)
-             RETURNING id, name, email`,
-            [name, email, hashedPassword],
+            `INSERT INTO users (name, email, password, last_login) 
+             VALUES ($1, $2, $3, $4)
+             RETURNING id, name, email, last_login`,
+            [name, email, hashedPassword, current_time],
             (err, r) => {
               if (err) {
                 console.log(err);
@@ -135,30 +137,6 @@ app.post("/api/auth/login", (req, res) => {
               res.status(401).send("Unauthorized");
             }
           });
-
-          // if (result.rows[0].password == password) {
-          //   if (status) {
-          //     const current_time = new Date();
-          //     pool.query(
-          //       `UPDATE users
-          //       SET last_login = $1
-          //       WHERE id = $2
-          //       RETURNING id, last_login`,
-          //       [current_time, id],
-          //       (err, result) => {
-          //         if (err) {
-          //           console.log(err);
-          //         }
-          //         console.log(result.rows);
-          //         res.send({ id, name, email });
-          //       }
-          //     );
-          //   } else {
-          //     res.status(403).send("User blocked");
-          //   }
-          // } else {
-          //   res.status(401).send("Unauthorized");
-          // }
         } else {
           res.status(401).send("Unauthorized");
         }
